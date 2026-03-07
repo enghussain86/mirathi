@@ -31,25 +31,31 @@ from engine.models import (
 )
 
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
-CORS_ALLOW_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "CORS_ALLOW_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000",
-    ).split(",")
-    if origin.strip()
-]
+
+raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000",
+).strip()
+
+if raw_origins == "*":
+    cors_allow_origins = ["*"]
+    cors_allow_credentials = False
+else:
+    cors_allow_origins = [
+        origin.strip() for origin in raw_origins.split(",") if origin.strip()
+    ]
+    cors_allow_credentials = True
 
 app = FastAPI(
     title="Mirathi API",
     description="API for inheritance calculation engine",
-    version="0.2.0",
+    version="0.2.1",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGINS,
-    allow_credentials=True,
+    allow_origins=cors_allow_origins,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
