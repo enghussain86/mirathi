@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -110,7 +110,7 @@ function formatDate(dateString?: string) {
   }
 }
 
-export default function ResultPage() {
+function ResultPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const caseId = searchParams.get("caseId");
@@ -707,5 +707,33 @@ export default function ResultPage() {
         </div>
       ) : null}
     </PageShell>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell
+          title="النتيجة النهائية"
+          subtitle="جارٍ تجهيز صفحة النتيجة..."
+        >
+          <Stepper current={5} />
+          <section className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+              <FileText className="h-6 w-6 text-emerald-700" />
+            </div>
+            <div className="mt-4 text-lg font-black text-slate-900">
+              جارٍ تحميل النتيجة...
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              انتظر قليلًا بينما يتم تجهيز البيانات.
+            </p>
+          </section>
+        </PageShell>
+      }
+    >
+      <ResultPageContent />
+    </Suspense>
   );
 }
