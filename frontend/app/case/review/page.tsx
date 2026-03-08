@@ -12,7 +12,6 @@ import {
   Printer,
   RefreshCcw,
   Scale,
-  Users,
   Wallet,
 } from "lucide-react";
 
@@ -148,6 +147,8 @@ function formatDate(value: string) {
 export default function ReviewPage() {
   const data = useCaseStore((s) => s.data);
   const reset = useCaseStore((s) => s.reset);
+  const setCalculationResult = useCaseStore((s) => s.setCalculationResult);
+  const clearCalculationResult = useCaseStore((s) => s.clearCalculationResult);
 
   const router = useRouter();
   const [savedCase, setSavedCase] = useState<SavedCaseResponse | null>(null);
@@ -182,6 +183,7 @@ export default function ReviewPage() {
     setError("");
     setResult(null);
     setSavedCase(null);
+    clearCalculationResult();
 
     try {
       const payload = {
@@ -224,11 +226,13 @@ export default function ReviewPage() {
 
       setSavedCase(json);
       setResult(json.result);
+      setCalculationResult(json.result);
 
       sessionStorage.setItem("mirathi-latest-result", JSON.stringify(json.result));
       sessionStorage.setItem("mirathi-latest-saved-case", JSON.stringify(json));
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع.");
+      clearCalculationResult();
     } finally {
       setLoading(false);
     }
@@ -251,6 +255,7 @@ export default function ReviewPage() {
 
   function handleClearInputs() {
     reset();
+    clearCalculationResult();
     setResult(null);
     setError("");
     setSavedCase(null);

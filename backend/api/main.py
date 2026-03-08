@@ -1,13 +1,23 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.assistant_retrieval import (
+    build_answer_from_retrieval,
+    get_embedding_model,
+    get_knowledge_index,
+)
 from api.case_repository import get_case, init_db, save_case
 from api.schemas import (
     AdjustmentResponse,
+    AssistantChatRequest,
+    AssistantChatResponse,
+    AssistantCitation,
     BlockedHeirResponse,
     CalculationRequest,
     CalculationResponse,
@@ -30,6 +40,10 @@ from engine.models import (
     ReferenceMode,
 )
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = BASE_DIR / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
+
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 
 raw_origins = os.getenv(
@@ -49,7 +63,7 @@ else:
 app = FastAPI(
     title="Mirathi API",
     description="API for inheritance calculation engine",
-    version="0.2.1",
+    version="0.5.0",
 )
 
 app.add_middleware(
@@ -64,6 +78,8 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
+    get_embedding_model()
+    get_knowledge_index()
 
 
 def _map_request_to_engine(payload: CalculationRequest) -> CaseInput:
@@ -231,4 +247,24 @@ def get_saved_case(case_id: str) -> SavedCaseResponse:
         ),
         input=CalculationRequest(**row["payload"]),
         result=CalculationResponse(**row["result"]),
+    )
+
+
+@app.post("/assistant/chat", response_model=AssistantChatResponse)
+def assistant_chat(payload: AssistantChatRequest) -> AssistantChatResponse:
+    result = build_answer_from_retrieval(
+        payload.question,
+        case_data=payload.case_data,
+        calculation_result=payload.calculation_result,
+    )
+
+    return AssistantChatResponse(
+        answer=result["answer"],
+        in_scope=result["in_scope"],
+        requires_human_review=result["requires_human_review"],
+        scope=result["scope"],
+        citations=[
+            AssistantCitation(**citation)
+            for citation in result.get("citations", [])
+        ],
     )

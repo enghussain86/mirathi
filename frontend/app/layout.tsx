@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Noto_Sans_Arabic } from "next/font/google";
 import TopNav from "@/components/TopNav";
+import MirathiAssistant from "@/components/MirathiAssistant";
 
 const arabicFont = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -24,6 +25,7 @@ export default function RootLayout({
       >
         <TopNav />
         <main>{children}</main>
+        <MirathiAssistant />
       </body>
     </html>
   );

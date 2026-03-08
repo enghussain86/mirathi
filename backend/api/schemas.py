@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -42,6 +42,7 @@ AssetTypeLiteral = Literal[
 ]
 
 CaseAdjustmentLiteral = Literal["none", "awl", "radd"]
+AssistantScopeLiteral = Literal["inheritance_uae", "out_of_scope", "needs_review"]
 
 
 class EstateAssetPayload(BaseModel):
@@ -150,3 +151,38 @@ class SavedCaseResponse(BaseModel):
     meta: SavedCaseMetaResponse
     input: CalculationRequest
     result: CalculationResponse
+
+
+class AssistantPageContext(BaseModel):
+    page: Optional[str] = None
+    section: Optional[str] = None
+    language: str = "ar"
+
+
+class AssistantHistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class AssistantCitation(BaseModel):
+    title: str = ""
+    citation: str = ""
+    url: str = ""
+    excerpt: str = ""
+    source_type: str = ""
+
+
+class AssistantChatRequest(BaseModel):
+    question: str = Field(..., min_length=1)
+    page_context: Optional[AssistantPageContext] = None
+    case_data: Optional[dict[str, Any]] = None
+    calculation_result: Optional[dict[str, Any]] = None
+    conversation_history: List[AssistantHistoryMessage] = Field(default_factory=list)
+
+
+class AssistantChatResponse(BaseModel):
+    answer: str
+    in_scope: bool = True
+    requires_human_review: bool = False
+    scope: AssistantScopeLiteral = "inheritance_uae"
+    citations: List[AssistantCitation] = Field(default_factory=list)

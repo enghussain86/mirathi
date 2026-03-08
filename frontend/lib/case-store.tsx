@@ -17,8 +17,63 @@ function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+export type CalculationResultStore = {
+  is_valid?: boolean;
+  validation_issues?: Array<{
+    code?: string;
+    message?: string;
+    field?: string | null;
+    heir_id?: string | null;
+  }>;
+  estate?: {
+    gross_estate?: number;
+    funeral?: number;
+    debts?: number;
+    requested_will?: number;
+    allowed_will?: number;
+    net_estate?: number;
+    notes?: string[];
+  } | null;
+  shares?: Array<{
+    heir_id?: string;
+    name?: string;
+    role?: string;
+    share_type?: string;
+    fraction?: string;
+    amount?: number;
+    percentage?: number;
+    reason?: string;
+  }>;
+  blocked?: Array<{
+    heir_id?: string;
+    name?: string;
+    role?: string;
+    reason?: string;
+  }>;
+  notes?: string[];
+  references?: Array<{
+    source_type?: string;
+    title?: string;
+    citation?: string;
+    note?: string;
+    url?: string;
+  }>;
+  adjustment?: {
+    type?: string;
+    applied?: boolean;
+    shares_total_before?: number;
+    shares_total_after?: number;
+    net_estate?: number;
+    remaining_before?: number;
+    remaining_after?: number;
+    ratio?: number;
+    explanation?: string;
+  } | null;
+} | null;
+
 type CaseStore = {
   data: CaseData;
+  calculationResult: CalculationResultStore;
 
   reset: () => void;
 
@@ -36,14 +91,22 @@ type CaseStore = {
   addHeir: (role: HeirRole) => void;
   updateHeir: (id: string, patch: Partial<Pick<HeirEntry, "name" | "dob">>) => void;
   removeHeir: (id: string) => void;
+
+  setCalculationResult: (result: CalculationResultStore) => void;
+  clearCalculationResult: () => void;
 };
 
 export const useCaseStore = create<CaseStore>()(
   persist(
     (set, get) => ({
       data: defaultCaseData,
+      calculationResult: null,
 
-      reset: () => set({ data: defaultCaseData }),
+      reset: () =>
+        set({
+          data: defaultCaseData,
+          calculationResult: null,
+        }),
 
       setDeceasedGender: (g) =>
         set((state) => ({
@@ -56,6 +119,7 @@ export const useCaseStore = create<CaseStore>()(
               return true;
             }),
           },
+          calculationResult: null,
         })),
 
       setReferenceMode: (mode) =>
@@ -69,6 +133,7 @@ export const useCaseStore = create<CaseStore>()(
               referenceMode: mode,
               madhhab: nextMadhhab,
             },
+            calculationResult: null,
           };
         }),
 
@@ -79,6 +144,7 @@ export const useCaseStore = create<CaseStore>()(
             madhhab:
               state.data.referenceMode === "uae_law" ? "general" : madhhab,
           },
+          calculationResult: null,
         })),
 
       setEstateField: (field, value) =>
@@ -90,6 +156,7 @@ export const useCaseStore = create<CaseStore>()(
               [field]: Number.isFinite(value) ? value : 0,
             },
           },
+          calculationResult: null,
         })),
 
       addAsset: () =>
@@ -110,6 +177,7 @@ export const useCaseStore = create<CaseStore>()(
               ],
             },
           },
+          calculationResult: null,
         })),
 
       updateAsset: (id, patch) =>
@@ -123,6 +191,7 @@ export const useCaseStore = create<CaseStore>()(
               ),
             },
           },
+          calculationResult: null,
         })),
 
       removeAsset: (id) =>
@@ -134,6 +203,7 @@ export const useCaseStore = create<CaseStore>()(
               assets: state.data.estate.assets.filter((a) => a.id !== id),
             },
           },
+          calculationResult: null,
         })),
 
       syncTotalFromAssets: () => {
@@ -151,6 +221,7 @@ export const useCaseStore = create<CaseStore>()(
               total,
             },
           },
+          calculationResult: null,
         }));
       },
 
@@ -188,6 +259,7 @@ export const useCaseStore = create<CaseStore>()(
                 },
               ],
             },
+            calculationResult: null,
           };
         }),
 
@@ -199,6 +271,7 @@ export const useCaseStore = create<CaseStore>()(
               h.id === id ? { ...h, ...patch } : h
             ),
           },
+          calculationResult: null,
         })),
 
       removeHeir: (id) =>
@@ -207,11 +280,22 @@ export const useCaseStore = create<CaseStore>()(
             ...state.data,
             heirs: state.data.heirs.filter((h) => h.id !== id),
           },
+          calculationResult: null,
         })),
+
+      setCalculationResult: (result) =>
+        set({
+          calculationResult: result,
+        }),
+
+      clearCalculationResult: () =>
+        set({
+          calculationResult: null,
+        }),
     }),
     {
       name: "mirathi-case-store",
-      version: 6,
+      version: 7,
       migrate: (persistedState: any) => {
         const state = persistedState ?? {};
 
@@ -226,10 +310,12 @@ export const useCaseStore = create<CaseStore>()(
             estate: {
               ...defaultCaseData.estate,
               ...(state?.data?.estate ?? {}),
-              assets: state?.data?.estate?.assets ?? defaultCaseData.estate.assets,
+              assets:
+                state?.data?.estate?.assets ?? defaultCaseData.estate.assets,
             },
             heirs: state?.data?.heirs ?? defaultCaseData.heirs,
           },
+          calculationResult: state?.calculationResult ?? null,
         };
       },
     }
