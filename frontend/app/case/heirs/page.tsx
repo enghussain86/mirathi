@@ -402,22 +402,32 @@ export default function HeirsPage() {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
-        >
-          رجوع
-        </button>
+  <button
+    type="button"
+    onClick={() => router.back()}
+    className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
+  >
+    رجوع
+  </button>
 
-        <button
-          type="button"
-          onClick={() => router.push("/case/review")}
-          className="rounded-2xl bg-emerald-700 px-6 py-3 font-bold text-white shadow-sm transition hover:bg-emerald-800"
-        >
-          متابعة إلى المراجعة
-        </button>
-      </div>
+  <div className="flex flex-wrap gap-3">
+    <button
+      type="button"
+      onClick={() => router.push("/case/family-tree")}
+      className="rounded-2xl border border-slate-200 bg-white px-5 py-3 font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
+    >
+      عرض شجرة العائلة
+    </button>
+
+    <button
+      type="button"
+      onClick={() => router.push("/case/review")}
+      className="rounded-2xl bg-emerald-700 px-6 py-3 font-bold text-white shadow-sm transition hover:bg-emerald-800"
+    >
+      متابعة إلى المراجعة
+    </button>
+  </div>
+</div>
     </PageShell>
   );
 }
